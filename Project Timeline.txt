@@ -1,0 +1,21 @@
+Project Timeline
+Iteration 1: Due Feburary 28
+
+Iteration 2: Due March 17
+- Decide the project: password generator
+- Lay out structure for the program
+- Code out basic functionalities
+- Reivew together and discuss possible improvements
+
+Iteration 3: Due March 24
+- Develop core functions
+- Peer review with other students
+- Testings and should be 85% close to final product
+
+Iteration 4: Due March 31
+- Should refine the program
+- Last review with peers
+- Prepare for presentation - practice public speaking
+
+Iteration 5: Due April 1
+- Final presentation
