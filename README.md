@@ -1,12 +1,12 @@
 # EECE2140-S24-Project
 This is the git repository for the final project of class EECE2140 for spring semester 2024.
 
-Final Project: Password Generator
+Final Project: QR Code Generator
 In general:
-Provide the option to allow user to input string of characters they would like to have in the password we generate
+Provide the option to allow user choose to generate or scan QR code
 
-If user choose to include string: and random characters in front of/between/after the strings they inputed
+If user choose to scan QR code: ask to access camera and scan the QR code
 
-If user choose not to include string/enter nothing: generate a random string of character for the user
+If user choose to generate QR code: ask for a url that the QR code will direct to
 
-Create a text file and export the newly generated password in the text file.
+Create a  file and export the newly generated QR code in the file.

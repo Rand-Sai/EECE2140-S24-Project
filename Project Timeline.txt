@@ -2,7 +2,7 @@ Project Timeline
 Iteration 1: Due Feburary 28
 
 Iteration 2: Due March 17
-- Decide the project: password generator
+- Decide the project: QR Code generator
 - Lay out structure for the program
 - Code out basic functionalities
 - Reivew together and discuss possible improvements
