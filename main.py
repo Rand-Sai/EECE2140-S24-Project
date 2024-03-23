@@ -26,7 +26,9 @@ class QRCodeGenerator:
 #main function
 def main():
     #Greet user
-    print('Hello!')
-
+    print('Hello!\n')
+    url1 = input("Enter the url of the website: \n")
+    QRG = QRCodeGenerator()
+    QRG.generate_qr_code(url1)
 #----------------------------------------------
 main()
