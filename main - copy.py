@@ -12,7 +12,7 @@ class QRCodeApp:
     def setup_ui(self):
         self.root.title("QR Code Application")
         
-        tk.Label(self.root, text="Welcome to the QR Code Application").pack(pady=20)
+        tk.Label(self.root, text="Welcome to the QR Code Application\nDesigned and Coded by Sai Him Yuan & Zekun Lin, All Rights Reserved").pack(pady=40)
         
         tk.Button(self.root, text="Generate QR Code", command=self.generate_qr_code).pack(fill=tk.X, padx=50, pady=5)
         tk.Button(self.root, text="Analyze QR Code", command=self.analyze_qr_code).pack(fill=tk.X, padx=50, pady=5)
@@ -20,7 +20,7 @@ class QRCodeApp:
         tk.Button(self.root, text="Exit", command=self.root.quit).pack(fill=tk.X, padx=50, pady=5)
 
     def generate_qr_code(self):
-        url = simpledialog.askstring("Content Input", "Enter URL for QR code:")
+        url = simpledialog.askstring("Content Input", "Enter text or URL for QR code:")
         if url:
             # Ask for the file name (optional)
             file_name = simpledialog.askstring("File Name", "Enter file name (optional):")
@@ -109,6 +109,6 @@ class QRCodeScanner(QRCodeAnalyzer):
 if __name__ == "__main__":
     root = tk.Tk()
     app = QRCodeApp(root)
-    root.geometry('500x250')
+    root.geometry('500x300')
     root.resizable(False, False)
     root.mainloop()
