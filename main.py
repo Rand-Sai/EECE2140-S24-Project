@@ -1,9 +1,9 @@
 import sys
 import qrcode
 import cv2
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QColorDialog, QFileDialog, QInputDialog, QHBoxLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QColorDialog, QFileDialog, QInputDialog, QHBoxLayout, QLineEdit, QDialog
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QClipboard
 
 class QRCodeGenerator:
     def __init__(self):
@@ -19,7 +19,7 @@ class QRCodeGenerator:
         self.qr.make(fit=True)
 
         img = self.qr.make_image(fill_color=color, back_color="white")
-        img_name = f"{name}.png" if name else "qr_code.png"
+        img_name = f"{name}" if name else "qr_code.png"
         img.save(img_name)
         return f"QR code generated successfully as {img_name}"
 
@@ -31,7 +31,7 @@ class QRCodeAnalyzer:
         img = cv2.imread(image)
         data, bbox, _ = self.detector.detectAndDecode(img)
         if bbox is not None and data:
-            return "Info stored in QR code: \n" + data
+            return data
         else:
             return "No QR code detected"
 
@@ -44,7 +44,7 @@ class QRCodeScanner(QRCodeAnalyzer):
         if not self.cap:
             self.cap = cv2.VideoCapture(0)
         if not self.cap.isOpened():
-            return "Camera device not found or cannot be invoked."
+            return "ERR"
 
         _, img = self.cap.read()
         data, bbox, _ = self.detector.detectAndDecode(img)
@@ -57,6 +57,36 @@ class QRCodeScanner(QRCodeAnalyzer):
         self.cap = None
         cv2.destroyAllWindows()
         return result
+    
+class ResultDialog(QDialog):
+    def __init__(self, parent=None):
+        super(ResultDialog, self).__init__(parent)
+        self.setWindowTitle('QR Code Analysis Result')
+        self.setGeometry(380, 340, 400, 200)
+        self.initUI()
+
+    def initUI(self):
+        layout = QVBoxLayout()
+        self.resultLineEdit = QLineEdit(self)
+        self.resultLineEdit.setReadOnly(True) 
+        layout.addWidget(self.resultLineEdit)
+
+        self.copyButton = QPushButton('Copy Result', self)
+        self.copyButton.clicked.connect(self.copyResult)
+        layout.addWidget(self.copyButton)
+
+        self.exitButton = QPushButton('Exit', self)
+        self.exitButton.clicked.connect(self.close) 
+        layout.addWidget(self.exitButton)
+
+        self.setLayout(layout)
+
+    def setResult(self, result):
+        self.resultLineEdit.setText(result) 
+
+    def copyResult(self):
+        clipboard = QApplication.clipboard()
+        clipboard.setText(self.resultLineEdit.text())
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -173,13 +203,31 @@ class MainWindow(QMainWindow):
 
     def scanQR(self):
         result = self.qr_scanner.camera_decode()
-        self.displayMessage(result)
+
+        if "ERR" in result:
+
+            self.displayMessage("Camera device not found or cannot be invoked")
+        elif"[+] QR code detected: data: " in result:
+
+            self.displayMessage('Analyze completed')
+            self.resultDialog = ResultDialog(self) 
+            self.resultDialog.setResult(result.replace("[+] QR code detected: data: ", ""))
+            self.resultDialog.exec_()
+        else:
+            self.displayMessage("No QR code detected")
 
     def analyzeQR(self):
         fileName, _ = QFileDialog.getOpenFileName(self, "Open QR Code", "", "Image Files (*.png *.jpg *.bmp);;All Files (*)")
         if fileName:
             result = self.qr_analyzer.image_decode(fileName)
-            self.displayMessage(result)
+            if "No QR code detected" not in result:
+
+                self.displayMessage('Analyze completed')
+                self.resultDialog = ResultDialog(self) 
+                self.resultDialog.setResult(result)  
+                self.resultDialog.exec_() 
+            else:
+                self.displayMessage("No QR code detected") 
 
 def main():
     app = QApplication(sys.argv)
