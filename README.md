@@ -10,7 +10,7 @@ git clone https://github.com/Rand-Sai/EECE2140-S24-Project.git
 2. Navigate to the project directory:
 cd QR_Code_Application
 3. Install the required dependencies:
-pip install qrcode opencv-python-headless pillow
+pip install qrcode opencv-python-headless pillow PyQt5
 
 ## Usage
 1. Run the application by executing the `main.py` file:
