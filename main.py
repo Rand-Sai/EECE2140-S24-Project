@@ -1,63 +1,10 @@
+import sys
 import qrcode
 import cv2
-import tkinter as tk
-from tkinter import simpledialog, messagebox, filedialog
-import threading
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QColorDialog, QFileDialog, QInputDialog, QHBoxLayout
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QFont
 
-# QR Code Application class
-class QRCodeApp:
-    def __init__(self, root):
-        self.root = root
-        self.setup_ui()
-        
-    # Set up the user interface
-    def setup_ui(self):
-        self.root.title("QR Code Application")
-        
-        # Welcome message
-        tk.Label(self.root, text="Welcome to the QR Code Application\nDesigned and Coded by Sai Him Yuan & Zekun Lin, All Rights Reserved").pack(pady=40)
-        
-        # Buttons for different functionalities
-        tk.Button(self.root, text="Generate QR Code", command=self.generate_qr_code).pack(fill=tk.X, padx=50, pady=5)
-        tk.Button(self.root, text="Analyze QR Code", command=self.analyze_qr_code).pack(fill=tk.X, padx=50, pady=5)
-        tk.Button(self.root, text="Scan QR Code with Camera", command=self.scan_qr_code).pack(fill=tk.X, padx=50, pady=5)
-        tk.Button(self.root, text="Exit", command=self.root.quit).pack(fill=tk.X, padx=50, pady=5)
-
-    # Function to generate QR code
-    def generate_qr_code(self):
-        url = simpledialog.askstring("Content Input", "Enter text or URL for QR code:")
-        if url:
-            # Ask for the file name (optional)
-            file_name = simpledialog.askstring("File Name", "Enter file name (optional):")
-            
-            # Ask for the QR code color
-            color = simpledialog.askstring("Color", "Enter QR code color (default is black):")
-            color = color if color else "black" 
-
-            qr_generator = QRCodeGenerator()
-            img_name = qr_generator.generate_qr_code(url, name=file_name, color=color)
-            messagebox.showinfo("QR Code Generated", f"QR code generated successfully as {img_name}")
-
-    # Function to analyze QR code from an image file
-    def analyze_qr_code(self):
-        file_path = filedialog.askopenfilename()
-        if file_path:
-            qr_analyzer = QRCodeAnalyzer()
-            data = qr_analyzer.image_decode(file_path)
-            messagebox.showinfo("QR Code Analysis", f"Info stored in QR code: \n{data}")
-
-    # Function to scan QR code using camera
-    def scan_qr_code(self):
-        threading.Thread(target=self._scan_qr_code_thread, daemon=True).start()
-
-    # Function to handle scanning QR code in a separate thread
-    def _scan_qr_code_thread(self):
-        qr_scanner = QRCodeScanner()
-        data = qr_scanner.camera_decode()
-        if data:
-            messagebox.showinfo("QR Code Scan", f"QR code detected: data: {data}")
-
-# QR Code Generator class
 class QRCodeGenerator:
     def __init__(self):
         self.qr = qrcode.QRCode(
@@ -66,64 +13,191 @@ class QRCodeGenerator:
             box_size=10,
             border=4,
         )
-
-    # Function to generate QR code image
     def generate_qr_code(self, url, name=None, color="black"):
         self.qr.clear()
         self.qr.add_data(url)
         self.qr.make(fit=True)
-        img = self.qr.make_image(fill_color=color, back_color="white")
-        if name is None:
-            img_name = url.replace("://", "_").replace("/", "_") + ".png"
-        else:
-            img_name = str(name) + ".png"
-        img.save(img_name)
-        return img_name
 
-# QR Code Analyzer class
+        img = self.qr.make_image(fill_color=color, back_color="white")
+        img_name = f"{name}.png" if name else "qr_code.png"
+        img.save(img_name)
+        return f"QR code generated successfully as {img_name}"
+
 class QRCodeAnalyzer:
     def __init__(self):
         self.detector = cv2.QRCodeDetector()
 
-    # Function to decode QR code from an image
     def image_decode(self, image):
         img = cv2.imread(image)
         data, bbox, _ = self.detector.detectAndDecode(img)
         if bbox is not None and data:
-            return data
-        return "No QR code found."
+            return "Info stored in QR code: \n" + data
+        else:
+            return "No QR code detected"
 
-# QR Code Scanner class
 class QRCodeScanner(QRCodeAnalyzer):
     def __init__(self):
         super().__init__()
-        self.cap = cv2.VideoCapture(0)
-        # Check if the camera is opened successfully
-        if not self.cap.isOpened():
-            self.cap = None
+        self.cap = None
 
-    # Function to decode QR code from camera feed
     def camera_decode(self):
-        if self.cap is None:
-            messagebox.showerror("Camera Error", "Unable to access the camera device.")
-            return "Camera not found."
-        
-        count = 0
-        while count < 1:
-            _, img = self.cap.read()
-            data, bbox, _ = self.detector.detectAndDecode(img)
-            if bbox is not None and data:
-                self.cap.release()
-                cv2.destroyAllWindows()
-                return data
-        self.cap.release()
-        cv2.destroyAllWindows()
-        return "No QR code detected."
+        if not self.cap:
+            self.cap = cv2.VideoCapture(0)
+        if not self.cap.isOpened():
+            return "Camera device not found or cannot be invoked."
 
-# Main function
+        _, img = self.cap.read()
+        data, bbox, _ = self.detector.detectAndDecode(img)
+        if bbox is not None and data:
+            result = "[+] QR code detected: data: " + data
+        else:
+            result = "No QR code detected"
+        
+        self.cap.release()
+        self.cap = None
+        cv2.destroyAllWindows()
+        return result
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+        #CSS format sheet
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: #f5f5f5;
+            }
+
+            QPushButton {
+                background-color: #0078D7;
+                color: white;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 14px;
+                font-weight: bold;
+                margin: 10px;
+            }
+
+            QPushButton:hover {
+                background-color: #0053a4;
+            }
+
+            QPushButton:pressed {
+                background-color: #00397a;
+            }
+
+            QLabel {
+                color: #2e2e2e;
+                font-size: 18px;
+            }
+        """)
+
+        # Initialize other components...
+        self.originalGreeting = 'Welcome to the QR Code APP'
+        self.greeting.setText(self.originalGreeting)
+        
+        self.qr_generator = QRCodeGenerator()
+        self.qr_scanner = QRCodeScanner()
+        self.qr_analyzer = QRCodeAnalyzer()
+
+    def resetGreeting(self):
+        self.greeting.setText(self.originalGreeting)
+
+    def displayMessage(self, message):
+        self.greeting.setText(message)
+        QTimer.singleShot(3000, self.resetGreeting)
+
+    def initUI(self):
+        self.setWindowTitle('QR Code Application')
+        self.setGeometry(100, 100, 600, 400)
+        
+        self.centralWidget = QWidget()
+        self.setCentralWidget(self.centralWidget)
+        mainLayout = QHBoxLayout()
+
+        self.setWindowTitle('QR Code Application')
+        self.setGeometry(200, 200, 700, 400)  # Set initial size and position
+        
+        self.setFixedSize(self.size())
+        
+        # Text on the left
+        self.greeting = QLabel('Welcome to the QR Code Application!', self)
+        self.greeting.setAlignment(Qt.AlignCenter)
+        mainLayout.addWidget(self.greeting, 1)  # The second argument is the stretch factor
+        self.greeting.setWordWrap(True)  # Enable word-wrap for the greeting text
+        self.greeting.setFixedWidth(250)
+        font = QFont("Arial", 16, QFont.Bold)
+        self.greeting.setFont(font)
+        
+        # Buttons on the right
+        buttonsLayout = QVBoxLayout()
+        self.generateButton = QPushButton('Generate QR Code(G)', self)
+        self.generateButton.clicked.connect(self.generateQR)
+        buttonsLayout.addWidget(self.generateButton)
+        
+        self.scanButton = QPushButton('Scan QR Code(S)', self)
+        self.scanButton.clicked.connect(self.scanQR)
+        buttonsLayout.addWidget(self.scanButton)
+        
+        self.analyzeButton = QPushButton('Analyze QR Code(A)', self)
+        self.analyzeButton.clicked.connect(self.analyzeQR)
+        buttonsLayout.addWidget(self.analyzeButton)
+        
+        self.exitButton = QPushButton('Exit(E)', self)
+        self.exitButton.clicked.connect(self.close)
+        buttonsLayout.addWidget(self.exitButton)
+
+        self.generateButton.setFixedSize(300, 75)  # Set fixed size
+        self.scanButton.setFixedSize(300, 75)
+        self.analyzeButton.setFixedSize(300, 75)
+        self.exitButton.setFixedSize(300, 75)
+
+        buttonFont = QFont("Arial", 14) 
+        self.generateButton.setFont(buttonFont) 
+        self.scanButton.setFont(buttonFont)
+        self.analyzeButton.setFont(buttonFont)
+        self.exitButton.setFont(buttonFont)
+
+        mainLayout.addLayout(buttonsLayout, 1)  # Adding the buttons layout to the main layout with a stretch factor
+        
+        self.centralWidget.setLayout(mainLayout)
+
+    def generateQR(self):
+        text, ok = QInputDialog.getText(self, 'QR Code Content', 'Enter the content for the QR Code:')
+        if ok and text:
+            color = QColorDialog.getColor(Qt.black, self).name()
+            fileName, _ = QFileDialog.getSaveFileName(self, "Save QR Code", "", "PNG Files (*.png);;All Files (*)")
+            if fileName:
+                result = self.qr_generator.generate_qr_code(text, fileName, color)
+                self.displayMessage(result)  # Use displayMessage instead
+
+    def scanQR(self):
+        result = self.qr_scanner.camera_decode()
+        self.displayMessage(result)
+
+    def analyzeQR(self):
+        fileName, _ = QFileDialog.getOpenFileName(self, "Open QR Code", "", "Image Files (*.png *.jpg *.bmp);;All Files (*)")
+        if fileName:
+            result = self.qr_analyzer.image_decode(fileName)
+            self.displayMessage(result)
+
+def main():
+    app = QApplication(sys.argv)
+    app.setStyleSheet("""
+        QDialog {
+            font-family: 'Arial';
+            font-size: 12px;
+        }
+        
+        QLineEdit {
+            border: 1px solid #ccc;
+            padding: 5px;
+            border-radius: 6px;
+        }
+        """)
+    win = MainWindow()
+    win.show()
+    sys.exit(app.exec_())
+
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = QRCodeApp(root)
-    root.geometry('500x300')
-    root.resizable(False, False)
-    root.mainloop()
+    main()
